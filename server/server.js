@@ -22,7 +22,7 @@ socket.broadcast.emit('newMessage',generateMessage('admin','new user joined'));
 socket.on('createMessage',(message,callback) => {
   console.log(message);
    io.emit('newMessage',generateMessage(message.from,message.text));
-   callback('this is from server');
+   callback();
 });
 
 
