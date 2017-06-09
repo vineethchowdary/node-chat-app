@@ -10,6 +10,8 @@ var server = http.createServer(app);
 var io = socketIO(server);
 const {generateMessage,generateLocationMessage} = require('./utils/message.js');
 const {isRealString} = require('./utils/validation.js');
+const {Users} = require('./utils/users.js')
+var users = new Users();
 app.use(express.static(publicPath));
 
 io.on('connection', (socket) => {
@@ -26,6 +28,9 @@ socket.on('join',(params,callback) => {
    //socket.emit--specific user
     //socket.broadcast.emit---all user except the send user---socket.broadcast.to('the office fans').emit
    //io.emi-----to all users--io.to('the office fans').emit
+   users.removeUser(socket.id);
+   users.addUser(socket.id,params.name,params.room);
+   io.to(params.room).emit('updateUserList',users.getUserList(params.room));
    socket.emit('newMessage',generateMessage('admin','welcome to chat app'));
    socket.broadcast.to(params.room).emit('newMessage',generateMessage('admin',`${params.name} has joined`));
 
@@ -46,7 +51,13 @@ socket.on('createLocationMessage',(coords) => {
 
 
   socket.on('disconnect', () => {
-    console.log('User was disconnected');
+    //console.log('User was disconnected');
+    var user = users.removeUser(socket.id);
+    if(user)
+    {
+      io.to(user.room).emit('updateUserList',users.getUserList(user.room));
+      io.to(user.room).emit('newMessage',generateMessage('admin',`${user.name} has left`));
+    }
   });
 
 
